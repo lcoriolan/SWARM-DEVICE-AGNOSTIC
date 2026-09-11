@@ -149,15 +149,28 @@ python3 server.py --host 0.0.0.0 --cert cert.pem --key key.pem
 
 Two or more devices reporting bearings produce a fused fix on the map.
 
-## What it is not
+## What's held back
 
-It is fully functional as a reference, but it is not the production PICKET system. It multilaterates
-and cross-fixes on **coarsely** synced clocks (tens of ms), so its fixes are coarse; the sub-sample
-precision alignment that tightens them is production, not here. It trusts each node's position and
-label verbatim, and it has no classifier and no coherent combining. Those, with the tuned detector,
-clip gating, and field hardening, are the production capability and are not distributed here. This
-reference exists to make the architecture legible, run end to end, and show where the advanced stages
-attach.
+This reference runs the whole pipeline end to end, but the pieces that make PICKET precise,
+sensitive, and smart stay private. Each is a documented, empty hook. Described here at the capability
+level, what it does and why it matters, never how:
+
+- **Sub-sample precision time alignment** (`pipeline/timesync.py`). The coarse clock sync in this repo
+  is good to tens of milliseconds, and at ~0.34 m per millisecond that only fixes a source coarsely.
+  Production disciplines the devices and aligns the same event to a *fraction of an audio sample*,
+  which is what turns coarse-metre TDOA into a tight fix.
+- **CoHear coherent combining** (`pipeline/coherent.py`). The engine that combines the devices' raw
+  audio into one coherent array, weak-signal detection and array gain, together with the event gating,
+  clip selection, and coincidence weighting that make it hold up in the field.
+- **The acoustic classifier** (`pipeline/classify.py`). The trained model and weights that decide what
+  a sound *is* (drone, gunfire, vehicle, and so on). The reference only passes through an edge label.
+- **The tuned detector** (beyond `pipeline/detect.py`'s textbook energy gate): spectral CFAR, tonal
+  tracking, and thresholds hardened against real-world noise.
+- **On-device multi-mic direction finding** (`pipeline/detect.py`, `bearing_from_device`). Real bearing
+  and elevation from a multi-mic node, absent here because one browser mic cannot form a bearing.
+
+None of the code, models, weights, or keys for these are in this repository; where each attaches, the
+file says so. Want to see them run? Open a "capability demo request" issue.
 
 ## License
 
