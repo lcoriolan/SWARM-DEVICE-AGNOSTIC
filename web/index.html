@@ -1,0 +1,55 @@
+<!doctype html>
+<!-- PROJECT: SWARM-DEVICE-AGNOSTIC (web reference) | CREATED: 2026-09-10 -->
+<!-- DESCRIPTION: One page, two panels. SENSOR: any browser becomes a node (mic level + textbook
+     onset gate, set position + bearing, post observations). PICTURE: the live fused map from the
+     server's report-level cross-fix. Self-contained, no external scripts or styles. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SWARM device-agnostic reference</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<header>
+  <h1>SWARM <span class="dim">device-agnostic web reference</span></h1>
+  <p class="note">Any browser is a sensor node. The server fuses observations with a report-level
+  bearing cross-fix. The coherent-combining (CoHear) and classifier stages are empty extension
+  points in this repository, see <code>pipeline/</code>.</p>
+</header>
+
+<main>
+  <section id="sensor">
+    <h2>Sensor</h2>
+    <div class="row">
+      <button id="mic">Enable mic</button>
+      <div class="meter"><div id="level"></div></div>
+      <span id="detect" class="badge">idle</span>
+    </div>
+    <label>Device id <input id="did" value="browser-1"></label>
+    <label>Position X (m) <input id="px" type="number" value="0"></label>
+    <label>Position Y (m) <input id="py" type="number" value="0"></label>
+    <label>Bearing to source (deg, cw from north)
+      <input id="brg" type="range" min="0" max="359" value="0"><span id="brgv">0</span></label>
+    <label>Edge label
+      <select id="lbl"><option>drone</option><option>aircraft</option><option>vehicle</option>
+      <option>voice</option><option>gunfire</option><option>explosion</option><option>background</option></select></label>
+    <div class="row">
+      <button id="send">Send observation</button>
+      <label class="inline"><input type="checkbox" id="auto"> auto-send while detecting</label>
+    </div>
+    <p class="note">A single browser mic cannot form a bearing (real direction finding needs a
+    multi-mic node, an extension point here), so set or simulate the bearing above. Run the server
+    with <code>--demo</code> to populate the picture with synthetic nodes.</p>
+  </section>
+
+  <section id="pic">
+    <h2>Picture <span id="stages" class="dim"></span></h2>
+    <canvas id="map" width="520" height="520"></canvas>
+    <div id="readout" class="note"></div>
+  </section>
+</main>
+
+<script src="/app.js"></script>
+</body>
+</html>
