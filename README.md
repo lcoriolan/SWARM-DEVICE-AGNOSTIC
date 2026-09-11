@@ -10,7 +10,24 @@ pipeline run end to end, and it leaves the high-value stages as **clearly marked
 points** so you can see the architecture and exactly where the advanced capability attaches. The
 production PICKET engine is not here.
 
-## Our Product
+## What you get here
+
+Runnable today, straight from this repository: turn any device with a microphone and a browser into
+an acoustic sensor node. Each node detects a sound and reports a bearing; the server fuses the nodes
+into a **live map picture** with a report-level bearing cross-fix. It runs anywhere a browser and
+Python do, with no app, no native build, and no dedicated hardware, and it scales by simply adding
+devices, more nodes widen the coverage and tighten the fix.
+
+The wire is kept deliberately light: a node streams a compact detection record and an **ACLIP, a
+lightweight acoustic signature** (envelope and peak, an averaged spectrum, a harmonic profile),
+never raw audio. That keeps alerting and correlation fast as the fleet grows, and a full clip is
+only ever pulled selectively, on cue. This is the plain, open reference, real end to end, textbook
+DSP, and no secrets.
+
+## What our secret sauce adds
+
+Fill the empty hooks with the production engine and the same architecture, the same devices
+streaming to one server, becomes far more than crossed bearings:
 
 - **CoHear coherent combining** (the `coherent` hook). Instead of only crossing per-device reports,
   it aligns the nodes' raw audio to sub-sample accuracy and combines it into one coherent array, so
@@ -63,24 +80,13 @@ From a single device's ~80 m bare range against a quiet small drone:
 Returns diminish past ~100 coherent devices (`sqrt(N)` needs 4x the devices to double range again),
 and only devices close enough to hear an event combine coherently for it, so beyond a local cluster
 more devices add **coverage**, not **range** on a single source. That is also the answer to "how
-many phones equal a dedicated system": at scale, enough commodity devices approximate a
+many devices equal a dedicated system": at scale, enough commodity devices approximate a
 purpose-built array, the reach just follows `sqrt(N)`.
 
 \* Modeled projection, not hardware-measured, and **set by the ambient noise floor**: every +6 dB of
 ambient roughly halves the range (wind alone adds ~10-20 dB). Uses the `10*log10(N)` / `sqrt(N)`
 law (validated in simulation through 12 nodes) on a modeled ~80 m single-device baseline. Real
 range depends on the source, wind, and terrain.
-
-## Low latency at scale
-
-The wire is kept deliberately light. A device streams a **compact detection record and an ACLIP, a
-lightweight acoustic signature** (envelope and peak, an averaged spectrum, a harmonic profile), not
-raw audio. That signature is small but carries enough for the server to cross-correlate and classify
-across devices, so the alert and correlation path stays fast even as the fleet grows to very large
-numbers of devices. Because what crosses the network is small and the fusion is report-level, adding
-devices widens coverage without flooding the link; a full clip is only ever pulled selectively, on
-cue, never streamed wholesale. That lightweight-by-design protocol is what keeps alerting and
-correlation near real time at scale.
 
 ## The pipeline
 
