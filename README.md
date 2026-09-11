@@ -1,6 +1,6 @@
 # SWARM-DEVICE-AGNOSTIC
 
-A web-based, device-agnostic reference for the SWARM approach: **any browser is a sensor node.**
+A web-based, device-agnostic reference for the acoustic SWARM approach: **any browser is a sensor node.**
 A node reports where it is and a bearing to a source; the server fuses the nodes into a live
 picture with a report-level bearing cross-fix. It runs anywhere a browser and Python do, no app,
 no native build, no dedicated hardware.
