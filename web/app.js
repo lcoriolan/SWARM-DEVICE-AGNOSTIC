@@ -37,16 +37,35 @@ async function enableMic() {
   }
 }
 
+let gpsOrigin = null;               // first GPS fix becomes the local-plane origin
+
 function send() {
   const obs = {
     device_id: $("did").value || "browser-1",
     x: parseFloat($("px").value) || 0,
     y: parseFloat($("py").value) || 0,
-    bearing_deg: parseFloat($("brg").value) || 0,
+    // Arrival timestamp for inter-device TDOA. NOTE: raw browser clocks are not synchronized across
+    // devices; disciplining them (and sub-sample alignment) is the extension point, not done here.
+    toa: Date.now() / 1000,
     edge_label: $("lbl").value,
   };
+  if ($("usebrg").checked) obs.bearing_deg = parseFloat($("brg").value) || 0;  // bearing is optional
   fetch("/observe", { method: "POST", body: JSON.stringify(obs) }).catch(() => {});
 }
+
+// GPS: fill this device's position from browser geolocation (with the user's consent).
+$("gps").onclick = () => {
+  if (!navigator.geolocation) { $("gps").textContent = "no GPS"; return; }
+  navigator.geolocation.getCurrentPosition((pos) => {
+    const la = pos.coords.latitude, lo = pos.coords.longitude;
+    if (!gpsOrigin) gpsOrigin = { la, lo };                       // first fix = local origin (0,0)
+    // Equirectangular approximation to a local metres plane around the origin.
+    const x = (lo - gpsOrigin.lo) * 111320 * Math.cos(gpsOrigin.la * Math.PI / 180);
+    const y = (la - gpsOrigin.la) * 111320;
+    $("px").value = x.toFixed(1); $("py").value = y.toFixed(1);
+    $("gps").textContent = "GPS set";
+  }, () => { $("gps").textContent = "GPS denied"; });
+};
 
 $("mic").onclick = enableMic;
 $("send").onclick = send;

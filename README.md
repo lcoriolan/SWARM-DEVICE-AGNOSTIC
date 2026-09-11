@@ -13,10 +13,14 @@ production PICKET engine is not here.
 ## What you get here
 
 Runnable today, straight from this repository: turn any device with a microphone and a browser into
-an acoustic sensor node. Each node detects a sound and reports a bearing; the server fuses the nodes
-into a **live map picture** with a report-level bearing cross-fix. It runs anywhere a browser and
-Python do, with no app, no native build, and no dedicated hardware, and it scales by simply adding
-devices, more nodes widen the coverage and tighten the fix.
+an acoustic sensor node. A single browser mic cannot form a bearing (that needs two channels), so the
+device-agnostic way to place a source is **inter-device TDOA**: each node simply timestamps when it
+hears an event, and the server multilaterates the arrival-time differences across devices into a
+**live map fix**, one mic per device, the array is the devices. Device positions come from **GPS**
+when the device shares them (or are typed in); a bearing cross-fix is also supported if a device can
+supply a bearing. It runs anywhere a browser and Python do, with no app, no native build, and no
+dedicated hardware, and it scales by simply adding devices, more nodes widen coverage and tighten the
+fix.
 
 The wire is kept deliberately light: a node streams a compact detection record and an **ACLIP, a
 lightweight acoustic signature** (envelope and peak, an averaged spectrum, a harmonic profile),
@@ -91,13 +95,15 @@ range depends on the source, wind, and terrain.
 ## The pipeline
 
 ```
-observation  ->  detect  ->  [classify hook]  ->  crossfix  ->  [coherent hook]  ->  picture
+observation -> detect -> [classify] -> { TDOA multilaterate | bearing cross-fix } -> [coherent] -> picture
 ```
 
 | Stage | File | In this repo |
 |---|---|---|
 | Detection (energy/onset gate) | `pipeline/detect.py`, `web/app.js` | Implemented (textbook) |
+| Inter-device TDOA multilateration | `pipeline/tdoa.py` | Implemented (textbook) |
 | Bearing cross-fix (triangulation) | `pipeline/crossfix.py` | Implemented (textbook) |
+| Cross-device time sync (aligned timestamps) | (feeds `tdoa`) | **Extension point, empty** |
 | Classifier (what the sound is) | `pipeline/classify.py` | **Extension point, empty** |
 | CoHear coherent combining | `pipeline/coherent.py` | **Extension point, empty** |
 | On-device multi-mic direction finding | `pipeline/detect.py` (`bearing_from_device`) | **Extension point, empty** |
@@ -137,11 +143,13 @@ Two or more devices reporting bearings produce a fused fix on the map.
 
 ## What it is not
 
-Not the production PICKET system. It stops at report-level cross-fix; it trusts each node's
-bearing and edge label verbatim; it has no classifier and no coherent combining. Those, along with
-the tuned detector, clip gating, and field hardening, are the production capability and are not
-distributed here. This reference exists to make the architecture legible and to show where the
-advanced stages attach.
+Not the production PICKET system. It multilaterates and cross-fixes, but it trusts each node's
+timestamp, position, and label verbatim and assumes the arrival times are already on a common clock,
+disciplining independent devices onto that clock and recovering sub-sample alignment is exactly the
+hard part, and it is production, not here. It has no classifier and no coherent combining either.
+Those, with the tuned detector, clip gating, and field hardening, are the production capability and
+are not distributed here. This reference exists to make the architecture legible and to show where
+the advanced stages attach.
 
 ## License
 

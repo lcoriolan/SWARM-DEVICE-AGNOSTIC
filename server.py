@@ -30,7 +30,7 @@ import threading
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
-from pipeline import crossfix, classify, coherent
+from pipeline import crossfix, tdoa, classify, coherent
 
 WEB_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "web")
 OBSERVER_TTL_S = 10.0                          # an observation older than this drops out of the picture
@@ -46,9 +46,10 @@ def ingest(obs):
     with _lock:
         _observers[did] = {
             "device_id": did,
-            "x": float(obs.get("x", 0.0)),
+            "x": float(obs.get("x", 0.0)),                # position (from GPS if the device shares it)
             "y": float(obs.get("y", 0.0)),
             "bearing_deg": (None if obs.get("bearing_deg") is None else float(obs["bearing_deg"])),
+            "toa": (None if obs.get("toa") is None else float(obs["toa"])),  # arrival time, common clock
             "edge_label": obs.get("edge_label"),
             "rx": time.monotonic(),
         }
@@ -59,23 +60,34 @@ def picture():
     now = time.monotonic()
     with _lock:
         active = [o for o in _observers.values() if now - o["rx"] <= OBSERVER_TTL_S]
-    # Report-level cross-fix over observers that actually carry a bearing.
+    # Two device-agnostic localization paths, both textbook:
+    #  1. Inter-device TDOA multilateration from arrival times (one mic + a timestamp per device).
+    #     This is the primary path in a browser, where a single mic cannot form a bearing.
+    #  2. Bearing cross-fix, used only if devices happen to supply bearings (e.g. a multi-mic node).
+    with_toa = [o for o in active if o["toa"] is not None]
     with_bearing = [o for o in active if o["bearing_deg"] is not None]
-    fix = crossfix.cross_fix(with_bearing) if len(with_bearing) >= 2 else None
+    fix, method = None, None
+    if len(with_toa) >= 3:
+        fix, method = tdoa.tdoa_fix(with_toa), "inter-device TDOA"
+    if fix is None and len(with_bearing) >= 2:
+        fix, method = crossfix.cross_fix(with_bearing), "bearing cross-fix"
     # Coherent stage is an extension point; in this reference it is not wired, so we note that.
-    coh = coherent.combine(clips=None, observers=with_bearing)  # returns None here by design
+    coh = coherent.combine(clips=None, observers=with_toa or with_bearing)  # returns None by design
     # Classifier is an extension point; pass the edge labels through.
     labels = [classify.classify(features=None, edge_label=o.get("edge_label")) for o in active]
     return {
         "observers": [
             {"device_id": o["device_id"], "x": o["x"], "y": o["y"], "bearing_deg": o["bearing_deg"],
-             "edge_label": o["edge_label"]}
+             "toa": o["toa"], "edge_label": o["edge_label"]}
             for o in active
         ],
         "fix": fix,
+        "fix_method": method,
         "labels": labels,
         "stages": {
-            "crossfix": "report-level (reference)",
+            "tdoa": "inter-device multilateration (reference)",
+            "crossfix": "bearing cross-fix (reference)",
+            "time_sync": ("wired" if coherent.available() else "extension point - not in this repo"),
             "coherent": ("wired" if coherent.available() else "extension point - not in this repo"),
             "classifier": ("wired" if classify.available() else "extension point - not in this repo"),
         },
@@ -137,11 +149,17 @@ def _demo_thread():
     while True:
         sx = 40 * math.cos(step / 15.0)       # source wanders on a slow circle
         sy = 40 * math.sin(step / 15.0)
+        emit = step * 0.5                     # emission time on the shared demo clock (seconds)
         for i, (x, y) in enumerate(ring):
+            dist = math.hypot(sx - x, sy - y)
+            # Arrival time on the shared clock = emission + travel time, with ~0.5 ms of jitter to
+            # stand in for imperfect sync. This is what a device would timestamp; the server
+            # multilaterates the TDOAs. (A bearing is also sent, but a real browser cannot form one.)
+            toa = emit + dist / tdoa.C_SOUND + 0.0005 * math.sin(step + i)
             true_b = math.degrees(math.atan2(sx - x, sy - y)) % 360.0   # clockwise from +Y
-            jitter = 2.0 * math.sin(step / 3.0 + i)                     # +/- 2 deg wobble
-            ingest({"device_id": f"demo-{i}", "x": x, "y": y,
-                    "bearing_deg": (true_b + jitter) % 360.0, "edge_label": "drone"})
+            ingest({"device_id": f"demo-{i}", "x": x, "y": y, "toa": toa,
+                    "bearing_deg": (true_b + 2.0 * math.sin(step / 3.0 + i)) % 360.0,
+                    "edge_label": "drone"})
         step += 1
         time.sleep(0.5)
 

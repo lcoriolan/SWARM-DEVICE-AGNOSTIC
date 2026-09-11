@@ -27,20 +27,27 @@
       <span id="detect" class="badge">idle</span>
     </div>
     <label>Device id <input id="did" value="browser-1"></label>
-    <label>Position X (m) <input id="px" type="number" value="0"></label>
-    <label>Position Y (m) <input id="py" type="number" value="0"></label>
-    <label>Bearing to source (deg, cw from north)
-      <input id="brg" type="range" min="0" max="359" value="0"><span id="brgv">0</span></label>
+    <div class="row">
+      <label>Position X (m) <input id="px" type="number" value="0"></label>
+      <label>Position Y (m) <input id="py" type="number" value="0"></label>
+      <button id="gps">Use GPS</button>
+    </div>
+    <label>Bearing to source (deg, optional)
+      <input id="brg" type="range" min="0" max="359" value="0"><span id="brgv">0</span>
+      <label class="inline"><input type="checkbox" id="usebrg"> send bearing</label></label>
     <label>Edge label
       <select id="lbl"><option>drone</option><option>aircraft</option><option>vehicle</option>
       <option>voice</option><option>gunfire</option><option>explosion</option><option>background</option></select></label>
     <div class="row">
       <button id="send">Send observation</button>
-      <label class="inline"><input type="checkbox" id="auto"> auto-send while detecting</label>
+      <label class="inline"><input type="checkbox" id="auto" checked> auto-send while detecting</label>
     </div>
-    <p class="note">A single browser mic cannot form a bearing (real direction finding needs a
-    multi-mic node, an extension point here), so set or simulate the bearing above. Run the server
-    with <code>--demo</code> to populate the picture with synthetic nodes.</p>
+    <p class="note">This device is <b>one microphone</b>. A single mic cannot form a bearing (that
+    needs a multi-mic node), so the device-agnostic way to place a source is <b>inter-device TDOA</b>:
+    the device just timestamps when it hears an event, and the server multilaterates the arrival-time
+    differences across devices. Position comes from <b>Use GPS</b> (or type it). Accurate cross-device
+    time sync is the one hard part, an extension point here; run the server with <code>--demo</code>
+    to see the TDOA fix form with synchronized nodes.</p>
   </section>
 
   <section id="pic">
