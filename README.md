@@ -43,6 +43,38 @@ classifier, direction finding, and self-localization, can be shown running, the 
 ATAK plugins. Open an issue on this repository (a "capability demo request") and we are glad to
 demo it or discuss access.
 
+## The distributed-device math
+
+Three laws govern a distributed acoustic array, and they are why device count matters:
+
+- **Array gain** grows as `10*log10(N)` dB with N coherently combined devices.
+- **Detection range** stretches as about `sqrt(N)` in the weak-signal regime, so every 4x more
+  devices roughly doubles the range on a faint source.
+- **Coverage** scales with N at fixed spacing: more devices simply watch more ground, and dense
+  spacing (nodes a hundred metres or so apart) means any source is heard by several at once.
+
+From a single device's ~80 m bare range against a quiet small drone:
+
+| Devices (N) | Array gain | Range vs 1 | Reach on a quiet drone* |
+|---|---|---|---|
+| 1 | 0 dB | 1x | ~80 m |
+| 4 | +6.0 dB | 2x | ~160 m |
+| 12 | +10.8 dB | 3.5x | ~280 m |
+| 24 | +13.8 dB | 4.9x | ~390 m |
+| 48 | +16.8 dB | 6.9x | ~555 m |
+| ~96 | +19.8 dB | 10x | ~785 m |
+
+Returns diminish past ~100 coherent devices (`sqrt(N)` needs 4x the devices to double range again),
+and only devices close enough to hear an event combine coherently for it, so beyond a local cluster
+more devices add **coverage**, not **range** on a single source. That is also the answer to "how
+many phones equal a dedicated system": at scale, enough commodity devices approximate a
+purpose-built array, the reach just follows `sqrt(N)`.
+
+\* Modeled projection, not hardware-measured, and **set by the ambient noise floor**: every +6 dB of
+ambient roughly halves the range (wind alone adds ~10-20 dB). Uses the `10*log10(N)` / `sqrt(N)`
+law (validated in simulation through 12 nodes) on a modeled ~80 m single-device baseline. Real
+range depends on the source, wind, and terrain.
+
 ## The pipeline
 
 ```
