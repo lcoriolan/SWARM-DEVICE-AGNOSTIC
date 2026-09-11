@@ -182,4 +182,4 @@ license.
 
 - [PICKET SWARM](https://github.com/lcoriolan/PICKETCUAS-SWARM): the acoustic ATAK plugin this reference mirrors (on-device detection, bearing, distributed array + CoHear).
 - [PICKET SNOOPY](https://github.com/lcoriolan/PICKETCUAS-SNOOPY): passive RF/ESM ATAK plugin (Wi-Fi/BLE survey + drone Remote ID).
-- [SNOOPY-RF-FUSION](https://github.com/lcoriolan/SNOOPY-RF-FUSION): the RF counterpart to this repo, merges many devices' RF reports into a coherent picture.
+- [SNOOPY RF fusion server](https://github.com/lcoriolan/PICKETCUAS-SNOOPY/tree/main/rf-fusion-server): the RF counterpart to this repo, merges many devices' RF reports into a coherent picture (in the SNOOPY repo).
