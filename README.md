@@ -75,6 +75,17 @@ ambient roughly halves the range (wind alone adds ~10-20 dB). Uses the `10*log10
 law (validated in simulation through 12 nodes) on a modeled ~80 m single-device baseline. Real
 range depends on the source, wind, and terrain.
 
+## Low latency at scale
+
+The wire is kept deliberately light. A device streams a **compact detection record and an ACLIP, a
+lightweight acoustic signature** (envelope and peak, an averaged spectrum, a harmonic profile), not
+raw audio. That signature is small but carries enough for the server to cross-correlate and classify
+across devices, so the alert and correlation path stays fast even as the fleet grows to very large
+numbers of devices. Because what crosses the network is small and the fusion is report-level, adding
+devices widens coverage without flooding the link; a full clip is only ever pulled selectively, on
+cue, never streamed wholesale. That lightweight-by-design protocol is what keeps alerting and
+correlation near real time at scale.
+
 ## The pipeline
 
 ```
