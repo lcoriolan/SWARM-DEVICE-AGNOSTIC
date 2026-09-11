@@ -30,7 +30,7 @@ import threading
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
-from pipeline import crossfix, tdoa, classify, coherent
+from pipeline import crossfix, tdoa, timesync, classify, coherent
 
 WEB_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "web")
 OBSERVER_TTL_S = 10.0                          # an observation older than this drops out of the picture
@@ -87,7 +87,8 @@ def picture():
         "stages": {
             "tdoa": "inter-device multilateration (reference)",
             "crossfix": "bearing cross-fix (reference)",
-            "time_sync": ("wired" if coherent.available() else "extension point - not in this repo"),
+            "time_sync": ("coarse SNTP active; precision wired" if timesync.precision_available()
+                          else "coarse SNTP active; sub-sample precision = extension point"),
             "coherent": ("wired" if coherent.available() else "extension point - not in this repo"),
             "classifier": ("wired" if classify.available() else "extension point - not in this repo"),
         },
@@ -121,6 +122,11 @@ class Handler(BaseHTTPRequestHandler):
             return self._static("style.css", "text/css")
         if self.path == "/api/picture":
             return self._send(200, json.dumps(picture()))
+        if self.path == "/time":
+            # Server wall clock, for the client's coarse SNTP-style offset estimate (see web/app.js).
+            # This makes real browsers report arrival times on a COMMON clock so TDOA runs live; it is
+            # textbook, ~tens of ms. Sub-sample precision alignment is the extension point (timesync.py).
+            return self._send(200, json.dumps({"server_time": time.time()}))
         return self._send(404, "not found", "text/plain")
 
     def do_POST(self):

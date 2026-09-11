@@ -22,6 +22,13 @@ supply a bearing. It runs anywhere a browser and Python do, with no app, no nati
 dedicated hardware, and it scales by simply adding devices, more nodes widen coverage and tighten the
 fix.
 
+This runs **end to end on real devices**, not just the demo: each browser coarsely syncs its clock to
+the server (an SNTP-style offset over `/time`, ~tens of ms) so every device's timestamps share a
+timebase, and TDOA multilaterates them live. That is a working multi-device acoustic localizer built
+entirely from commodity browsers. What is *not* here are the DSP secrets that make it precise and
+smart, sub-sample time alignment, coherent combining, and the classifier model, which is the whole
+point of the extension points below.
+
 The wire is kept deliberately light: a node streams a compact detection record and an **ACLIP, a
 lightweight acoustic signature** (envelope and peak, an averaged spectrum, a harmonic profile),
 never raw audio. That keeps alerting and correlation fast as the fleet grows, and a full clip is
@@ -103,7 +110,8 @@ observation -> detect -> [classify] -> { TDOA multilaterate | bearing cross-fix 
 | Detection (energy/onset gate) | `pipeline/detect.py`, `web/app.js` | Implemented (textbook) |
 | Inter-device TDOA multilateration | `pipeline/tdoa.py` | Implemented (textbook) |
 | Bearing cross-fix (triangulation) | `pipeline/crossfix.py` | Implemented (textbook) |
-| Cross-device time sync (aligned timestamps) | (feeds `tdoa`) | **Extension point, empty** |
+| Coarse clock sync (SNTP-style offset) | `pipeline/timesync.py`, `web/app.js`, `/time` | Implemented (textbook) |
+| Sub-sample precision alignment | `pipeline/timesync.py` (`refine`) | **Extension point, empty** |
 | Classifier (what the sound is) | `pipeline/classify.py` | **Extension point, empty** |
 | CoHear coherent combining | `pipeline/coherent.py` | **Extension point, empty** |
 | On-device multi-mic direction finding | `pipeline/detect.py` (`bearing_from_device`) | **Extension point, empty** |
@@ -143,13 +151,13 @@ Two or more devices reporting bearings produce a fused fix on the map.
 
 ## What it is not
 
-Not the production PICKET system. It multilaterates and cross-fixes, but it trusts each node's
-timestamp, position, and label verbatim and assumes the arrival times are already on a common clock,
-disciplining independent devices onto that clock and recovering sub-sample alignment is exactly the
-hard part, and it is production, not here. It has no classifier and no coherent combining either.
-Those, with the tuned detector, clip gating, and field hardening, are the production capability and
-are not distributed here. This reference exists to make the architecture legible and to show where
-the advanced stages attach.
+It is fully functional as a reference, but it is not the production PICKET system. It multilaterates
+and cross-fixes on **coarsely** synced clocks (tens of ms), so its fixes are coarse; the sub-sample
+precision alignment that tightens them is production, not here. It trusts each node's position and
+label verbatim, and it has no classifier and no coherent combining. Those, with the tuned detector,
+clip gating, and field hardening, are the production capability and are not distributed here. This
+reference exists to make the architecture legible, run end to end, and show where the advanced stages
+attach.
 
 ## License
 

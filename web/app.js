@@ -38,15 +38,36 @@ async function enableMic() {
 }
 
 let gpsOrigin = null;               // first GPS fix becomes the local-plane origin
+let clockOffset = 0;                // seconds to add to this device's clock to reach the server clock
+
+// Coarse SNTP-style clock discipline: ping /time a few times and estimate the offset from this
+// device's clock to the server's, correcting for round-trip. This is the textbook part that lets
+// independent browsers report arrival times on a COMMON clock so inter-device TDOA runs live. It is
+// only ~tens of ms accurate; the sub-sample precision alignment that tightens it is the extension
+// point (pipeline/timesync.py), not in this repo.
+async function syncClock() {
+  const samples = [];
+  for (let i = 0; i < 5; i++) {
+    const t0 = Date.now() / 1000;
+    try {
+      const r = await (await fetch("/time")).json();
+      const t3 = Date.now() / 1000, rtt = t3 - t0;
+      samples.push(r.server_time + rtt / 2 - t3);   // offset, assuming symmetric round-trip
+    } catch (e) { /* server not up */ }
+  }
+  if (samples.length) { samples.sort((a, b) => a - b); clockOffset = samples[samples.length >> 1]; }
+}
+syncClock();
+setInterval(syncClock, 30000);      // re-sync periodically to track drift
 
 function send() {
   const obs = {
     device_id: $("did").value || "browser-1",
     x: parseFloat($("px").value) || 0,
     y: parseFloat($("py").value) || 0,
-    // Arrival timestamp for inter-device TDOA. NOTE: raw browser clocks are not synchronized across
-    // devices; disciplining them (and sub-sample alignment) is the extension point, not done here.
-    toa: Date.now() / 1000,
+    // Arrival timestamp for inter-device TDOA, put on the shared server clock via the coarse sync
+    // above. Sub-sample precision alignment (which tightens the fix) is the extension point.
+    toa: Date.now() / 1000 + clockOffset,
     edge_label: $("lbl").value,
   };
   if ($("usebrg").checked) obs.bearing_deg = parseFloat($("brg").value) || 0;  // bearing is optional
