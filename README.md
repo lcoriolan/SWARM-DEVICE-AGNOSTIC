@@ -10,6 +10,39 @@ pipeline run end to end, and it leaves the high-value stages as **clearly marked
 points** so you can see the architecture and exactly where the advanced capability attaches. The
 production PICKET engine is not here.
 
+## What this teases
+
+The empty hooks are the whole point. Fill them with the production engine and this same
+architecture, the same browsers streaming to one server, becomes a distributed acoustic sensing
+system that does far more than cross bearings:
+
+- **CoHear coherent combining** (the `coherent` hook). Instead of only crossing per-device reports,
+  it aligns the nodes' raw audio to sub-sample accuracy and combines it into one coherent array, so
+  a source too faint for any single device to call rises out of the noise. Array gain grows with the
+  node count (about `10*log10(N)` dB), which in the weak-signal regime stretches detection range by
+  roughly `sqrt(N)`, and the alignment needs no shared hardware clock, so it works across ordinary,
+  software-clocked devices. In simulation the gain tracks the ideal within about 0.1 dB and
+  localization reaches sub-meter.
+- **Classification** (the `classify` hook). An on-device model that says what a sound *is*, drone,
+  aircraft, vehicle, voice, gunfire, explosion, not merely that something is there.
+- **Direction finding and elevation** (the DF hook). Real multi-mic bearing, including up/down, so a
+  low, terrain-hugging FPV reads differently from one passing overhead.
+- **Self-localization.** Nodes that solve their own positions from the sounds they share, so a
+  deployment needs no survey and can keep placing itself even with GPS denied.
+
+Put those together and a swarm of commodity devices becomes a passive, distributed **acoustic
+battlefield situational-awareness** mesh, hearing and placing drones, gunfire, and movers on the
+map, that holds when GPS and comms are jammed and gives an adversary nothing to detect or jam.
+Because it is coherent, more devices mean both longer reach and a tighter fix at once. This
+repository is the doorway; that capability is what plugs into these hooks. The performance figures
+above are modeled and simulation-validated, not field guarantees, and range depends on the source
+and the ambient noise floor. More at https://github.com/lcoriolan/PICKETCUAS-SWARM.
+
+**Want to see the rest?** The full capability behind these hooks, coherent combining, the
+classifier, direction finding, and self-localization, can be shown running, the same as with the
+ATAK plugins. Open an issue on this repository (a "capability demo request") and we are glad to
+demo it or discuss access.
+
 ## The pipeline
 
 ```
