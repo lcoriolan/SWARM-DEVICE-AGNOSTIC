@@ -177,3 +177,9 @@ file says so. Want to see them run? Open a "capability demo request" issue.
 Source-available under the **PolyForm Noncommercial License 1.0.0** (see `LICENSE`) for
 evaluation, research, and personal use. Commercial or operational deployment requires a separate
 license.
+
+## PICKET family
+
+- [PICKET SWARM](https://github.com/lcoriolan/PICKETCUAS-SWARM): the acoustic ATAK plugin this reference mirrors (on-device detection, bearing, distributed array + CoHear).
+- [PICKET SNOOPY](https://github.com/lcoriolan/PICKETCUAS-SNOOPY): passive RF/ESM ATAK plugin (Wi-Fi/BLE survey + drone Remote ID).
+- [SNOOPY-RF-FUSION](https://github.com/lcoriolan/SNOOPY-RF-FUSION): the RF counterpart to this repo, merges many devices' RF reports into a coherent picture.
