@@ -10,11 +10,7 @@ pipeline run end to end, and it leaves the high-value stages as **clearly marked
 points** so you can see the architecture and exactly where the advanced capability attaches. The
 production PICKET engine is not here.
 
-## What this teases
-
-The empty hooks are the whole point. Fill them with the production engine and this same
-architecture, the same browsers streaming to one server, becomes a distributed acoustic sensing
-system that does far more than cross bearings:
+## Our Product
 
 - **CoHear coherent combining** (the `coherent` hook). Instead of only crossing per-device reports,
   it aligns the nodes' raw audio to sub-sample accuracy and combines it into one coherent array, so
